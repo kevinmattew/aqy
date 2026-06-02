@@ -1,0 +1,42 @@
+
+# 敏感文件
+.env
+.streamlit/secrets.toml
+
+# macOS
+.DS_Store
+
+# 临时和缓存文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+ENV/
+
+# 数据文件
+data/*.json
+*.jpg
+*.jpeg
+*.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 测试和调试
+test_*.py
+debug_*.py
+
+# 原始JS
+auto_answer.js
