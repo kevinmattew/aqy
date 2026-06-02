@@ -14,7 +14,7 @@ MEMBER_ID = os.getenv('MEMBER_ID', '')
 UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.59(0x18003b2c) NetType/WIFI Language/zh_CN'
 
 GITEE_CONFIG = {
-    'enabled': os.getenv('GITEE_ENABLED', 'false').lower() == 'true',
+    'enabled': os.getenv('GITEE_ENABLED', 'true').lower() == 'true',
     'owner': os.getenv('GITEE_OWNER', 'sanchuan503'),
     'repo': os.getenv('GITEE_REPO', 'safe-quiz-bank'),
     'token': os.getenv('GITEE_TOKEN', ''),
