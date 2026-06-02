@@ -29,10 +29,7 @@ AI_CONFIG = {
     'model': os.getenv('AI_MODEL', 'deepseek-v4-flash')
 }
 
-
 import gzip
-import brotli
-
 def api_request(path, method='GET', body=None, retries=2):
     url = BASE_URL + path
     
@@ -77,10 +74,6 @@ def api_request(path, method='GET', body=None, retries=2):
                             decompressed = gzip.decompress(response.content)
                             text = decompressed.decode('utf-8')
                             print(f"  gzip decompressed: {text[:500]}...")
-                        elif encoding == 'br':
-                            decompressed = brotli.decompress(response.content)
-                            text = decompressed.decode('utf-8')
-                            print(f"  brotli decompressed: {text[:500]}...")
                         else:
                             text = response.text[:500]
                             print(f"  Text response: {text}...")

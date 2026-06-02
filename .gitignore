@@ -26,6 +26,7 @@ data/*.json
 *.jpg
 *.jpeg
 *.png
+!data/questions.json
 
 # IDE
 .vscode/
