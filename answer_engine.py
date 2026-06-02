@@ -125,23 +125,27 @@ async def run_auto_answer(progress_callback=None):
     
     # 1. 答题前先从GitHub拉取最新题库
     log('📥 [0/4] 从GitHub同步题库...')
-    sync_result = github.sync_from_github()
-    if sync_result['success']:
-        remote_bank = sync_result['data']
-        bank = init_built_in_bank()
-        # 合并题库（去重）
-        merged = 0
-        for k, v in remote_bank.items():
-            if k not in bank:
-                bank[k] = v
-                merged += 1
-        if merged > 0:
-            log(f'   ✅ 从GitHub同步了 {merged} 道新题')
+    try:
+        sync_result = github.sync_from_github()
+        if sync_result['success']:
+            remote_bank = sync_result['data']
+            bank = init_built_in_bank()
+            # 合并题库（去重）
+            merged = 0
+            for k, v in remote_bank.items():
+                if k not in bank:
+                    bank[k] = v
+                    merged += 1
+            if merged > 0:
+                log(f'   ✅ 从GitHub同步了 {merged} 道新题')
+            else:
+                log(f'   ✅ 题库已是最新')
+            save_bank(bank)
         else:
-            log(f'   ✅ 题库已是最新')
-        save_bank(bank)
-    else:
-        log(f'   ⚠️ GitHub同步失败，使用本地题库: {sync_result.get("reason", "")}')
+            log(f'   ⚠️ GitHub同步失败，使用本地题库: {sync_result.get("reason", "")}')
+            bank = init_built_in_bank()
+    except Exception as e:
+        log(f'   ⚠️ GitHub同步出错，使用本地题库: {str(e)}')
         bank = init_built_in_bank()
         
     wrong_list = load_wrong()

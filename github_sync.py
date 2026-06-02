@@ -12,7 +12,7 @@ class GitHubSync:
         self.branch = os.getenv('GITHUB_BRANCH', 'main')
         self.questions_path = os.getenv('GITHUB_QUESTIONS_PATH', 'data/questions.json')
         
-    def _get_headers(self):
+    def _get_headers(self, require_auth=False):
         headers = {'Accept': 'application/vnd.github.v3+json'}
         if self.token:
             headers['Authorization'] = f'token {self.token}'
@@ -24,16 +24,26 @@ class GitHubSync:
             if method == 'GET':
                 response = requests.get(url, headers=self._get_headers(), timeout=20)
             else:
-                response = requests.request(method, url, headers=self._get_headers(), json=body, timeout=20)
+                response = requests.request(method, url, headers=self._get_headers(require_auth=True), json=body, timeout=20)
             return response.json()
         except Exception as e:
             return {'error': str(e)}
     
     def get_questions(self):
-        """从GitHub获取题库"""
-        if not self.token:
-            return {'success': False, 'reason': '未配置GitHub令牌'}
+        """从GitHub获取题库（公开仓库，无token也能读）"""
+        # 先尝试用原始文件方式（无token也能读）
+        try:
+            raw_url = f'https://raw.githubusercontent.com/{self.owner}/{self.repo}/{self.branch}/{self.questions_path}'
+            resp = requests.get(raw_url, timeout=15)
+            if resp.status_code == 200:
+                # 先获取sha（需要API）
+                api_resp = self._api_request(f'/repos/{self.owner}/{self.repo}/contents/{self.questions_path}')
+                sha = api_resp.get('sha', '')
+                return {'success': True, 'data': resp.json(), 'sha': sha}
+        except Exception as e:
+            pass
         
+        # 如果不行再用API方式
         resp = self._api_request(f'/repos/{self.owner}/{self.repo}/contents/{self.questions_path}')
         if 'content' in resp:
             decoded = base64.b64decode(resp['content']).decode('utf-8')
