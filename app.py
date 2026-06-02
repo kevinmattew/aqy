@@ -130,6 +130,13 @@ def main():
         else:
             st.info("ℹ️ 请填写 TOKEN 和 MEMBER_ID 以检查账号状态")
         
+        st.subheader("☁️ 题库同步配置（可选）")
+        sync_source = st.radio(
+            "同步源选择",
+            ["GitHub (推荐)", "Gitee", "不同步"],
+            index=0
+        )
+        
         st.subheader("🤖 AI 答题配置（可选）")
         ai_enabled = st.checkbox("启用 AI 辅助答题", value=False)
         
@@ -164,7 +171,7 @@ def main():
                     add_log(msg)
                     progress_bar.progress(min(95, len(st.session_state.logs) * 2))
                 
-                result = await run_auto_answer(progress_callback)
+                result = await run_auto_answer(progress_callback, sync_source)
                 progress_bar.progress(100)
                 
                 if result['success']:

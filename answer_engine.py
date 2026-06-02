@@ -111,7 +111,7 @@ async def answer_one_question(qid, bank, wrong_list, stats, scene_name, level_no
     return result, bank, wrong_list, stats
 
 
-async def run_auto_answer(progress_callback=None):
+async def run_auto_answer(progress_callback=None, sync_source='GitHub (推荐)'):
     logs = []
     github = GitHubSync()
     
@@ -123,30 +123,44 @@ async def run_auto_answer(progress_callback=None):
     if not api_request.__globals__.get('TOKEN') or not api_request.__globals__.get('MEMBER_ID'):
         return {'success': False, 'error': '未配置 TOKEN 或 MEMBER_ID', 'logs': logs}
     
-    # 1. 答题前先从GitHub拉取最新题库
-    log('📥 [0/4] 从GitHub同步题库...')
-    try:
-        sync_result = github.sync_from_github()
-        if sync_result['success']:
-            remote_bank = sync_result['data']
-            bank = init_built_in_bank()
-            # 合并题库（去重）
-            merged = 0
-            for k, v in remote_bank.items():
-                if k not in bank:
-                    bank[k] = v
-                    merged += 1
-            if merged > 0:
-                log(f'   ✅ 从GitHub同步了 {merged} 道新题')
+    bank = init_built_in_bank()
+    
+    # 1. 答题前先拉取最新题库
+    if sync_source == 'GitHub (推荐)':
+        log('📥 [0/4] 从GitHub同步题库...')
+        try:
+            sync_result = github.sync_from_github()
+            if sync_result['success']:
+                remote_bank = sync_result['data']
+                bank = init_built_in_bank()
+                merged = 0
+                for k, v in remote_bank.items():
+                    if k not in bank:
+                        bank[k] = v
+                        merged += 1
+                if merged > 0:
+                    log(f'   ✅ 从GitHub同步了 {merged} 道新题')
+                else:
+                    log(f'   ✅ 题库已是最新')
+                save_bank(bank)
             else:
-                log(f'   ✅ 题库已是最新')
-            save_bank(bank)
-        else:
-            log(f'   ⚠️ GitHub同步失败，使用本地题库: {sync_result.get("reason", "")}')
+                log(f'   ⚠️ GitHub同步失败，使用本地题库: {sync_result.get("reason", "")}')
+                bank = init_built_in_bank()
+        except Exception as e:
+            log(f'   ⚠️ GitHub同步出错，使用本地题库: {str(e)}')
             bank = init_built_in_bank()
-    except Exception as e:
-        log(f'   ⚠️ GitHub同步出错，使用本地题库: {str(e)}')
-        bank = init_built_in_bank()
+    elif sync_source == 'Gitee':
+        log('📥 [0/4] 从Gitee同步题库...')
+        try:
+            await cloud_sync()
+            bank = load_bank()
+            log('   ✅ 从Gitee同步完成')
+        except Exception as e:
+            log(f'   ⚠️ Gitee同步失败，使用本地题库: {str(e)}')
+            bank = init_built_in_bank()
+    else:
+        log('📥 [0/4] 跳过云端同步，使用本地题库')
+        bank = load_bank()
         
     wrong_list = load_wrong()
     stats = load_stats()
@@ -278,44 +292,48 @@ async def run_auto_answer(progress_callback=None):
         prizes.append(name)
         log(f'   🎁 {i+1}: {name}')
     
-    await cloud_sync()
-    
-    # 2. 答题后同步新题到GitHub
-    log('\n📤 [5/4] 同步新题到GitHub...')
-    try:
-        # 先检查内置题库有多少
-        built_in = init_built_in_bank()
-        # 找出新增的题目（不在内置题库中的）
-        new_questions = {}
-        for k, v in bank.items():
-            if k not in built_in:
-                new_questions[k] = v
-        
-        if len(new_questions) > 0:
-            # 先从GitHub拉取最新版本（避免冲突）
-            current = github.get_questions()
-            if current['success']:
-                # 合并
-                merged_bank = current['data']
-                added = 0
-                for k, v in new_questions.items():
-                    if k not in merged_bank:
-                        merged_bank[k] = v
-                        added += 1
-                if added > 0:
-                    result = github.update_questions(merged_bank, current.get('sha'))
-                    if result['success']:
-                        log(f'   ✅ 上传 {added} 道新题到GitHub成功!')
+    # 2. 答题后同步新题到云端
+    if sync_source == 'GitHub (推荐)':
+        log('\n📤 [5/4] 同步新题到GitHub...')
+        try:
+            built_in = init_built_in_bank()
+            new_questions = {}
+            for k, v in bank.items():
+                if k not in built_in:
+                    new_questions[k] = v
+            
+            if len(new_questions) > 0:
+                current = github.get_questions()
+                if current['success']:
+                    merged_bank = current['data']
+                    added = 0
+                    for k, v in new_questions.items():
+                        if k not in merged_bank:
+                            merged_bank[k] = v
+                            added += 1
+                    if added > 0:
+                        result = github.update_questions(merged_bank, current.get('sha'))
+                        if result['success']:
+                            log(f'   ✅ 上传 {added} 道新题到GitHub成功!')
+                        else:
+                            log(f'   ⚠️ GitHub上传失败: {result.get("reason", "")}')
                     else:
-                        log(f'   ⚠️ GitHub上传失败: {result.get("reason", "")}')
+                        log(f'   ℹ️ GitHub题库已是最新')
                 else:
-                    log(f'   ℹ️ GitHub题库已是最新')
+                    log(f'   ⚠️ 获取GitHub题库失败: {current.get("reason", "")}')
             else:
-                log(f'   ⚠️ 获取GitHub题库失败: {current.get("reason", "")}')
-        else:
-            log(f'   ℹ️ 无新题需要上传')
-    except Exception as e:
-        log(f'   ⚠️ GitHub同步出错: {str(e)}')
+                log(f'   ℹ️ 无新题需要上传')
+        except Exception as e:
+            log(f'   ⚠️ GitHub同步出错: {str(e)}')
+    elif sync_source == 'Gitee':
+        log('\n📤 [5/4] 同步新题到Gitee...')
+        try:
+            await cloud_sync()
+            log(f'   ✅ 同步到Gitee完成!')
+        except Exception as e:
+            log(f'   ⚠️ Gitee同步出错: {str(e)}')
+    else:
+        log('\n📤 [5/4] 跳过云端同步')
     
     stats['bankSize'] = len(bank)
     save_bank(bank)
