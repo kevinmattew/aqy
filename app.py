@@ -101,9 +101,9 @@ def main():
         
         col1, col2 = st.columns(2)
         with col1:
-            token_input = st.text_input("🔑 TOKEN", value=TOKEN, placeholder="请输入您的TOKEN")
+            token_input = st.text_input("🔑 TOKEN", value="", placeholder="请输入您的TOKEN", type="password")
         with col2:
-            member_id_input = st.text_input("🆔 MEMBER_ID", value=MEMBER_ID, placeholder="请输入您的MEMBER_ID")
+            member_id_input = st.text_input("🆔 MEMBER_ID", value="", placeholder="请输入您的MEMBER_ID", type="password")
         
         st.subheader("📊 账号状态")
         status_placeholder = st.empty()
@@ -131,16 +131,16 @@ def main():
             st.info("ℹ️ 请填写 TOKEN 和 MEMBER_ID 以检查账号状态")
         
         st.subheader("🤖 AI 答题配置（可选）")
-        ai_enabled = st.checkbox("启用 AI 辅助答题", value=bool(AI_CONFIG.get('api_key')))
+        ai_enabled = st.checkbox("启用 AI 辅助答题", value=False)
         
         if ai_enabled:
             ai_col1, ai_col2, ai_col3 = st.columns(3)
             with ai_col1:
-                ai_api_key = st.text_input("AI API Key", value=AI_CONFIG.get('api_key', ''), placeholder="sk-xxx")
+                ai_api_key = st.text_input("AI API Key", value="", placeholder="sk-xxx", type="password")
             with ai_col2:
-                ai_api_url = st.text_input("API URL", value=AI_CONFIG.get('api_url', 'https://api.deepseek.com/v1/chat/completions'))
+                ai_api_url = st.text_input("API URL", value="https://api.deepseek.com/v1/chat/completions")
             with ai_col3:
-                ai_model = st.text_input("模型名称", value=AI_CONFIG.get('model', 'deepseek-v4-flash'))
+                ai_model = st.text_input("模型名称", value="deepseek-v4-flash")
         
         if st.button("▶️ 开始自动答题", type="primary"):
             if not token_input or not member_id_input:
