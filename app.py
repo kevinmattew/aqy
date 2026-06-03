@@ -137,19 +137,13 @@ def main():
             index=0
         )
         
-        st.subheader("🤖 AI 答题配置")
-        # 默认用 Secrets 里的 AI 配置，默认启用
-        ai_enabled = st.checkbox("启用 AI 辅助答题", value=bool(AI_CONFIG.get('api_key')), disabled=not bool(AI_CONFIG.get('api_key')))
-        
-        # 高级选项（展开显示 AI 配置
-        with st.expander("⚙️ 高级：修改 AI 配置", expanded=False):
-            ai_col1, ai_col2, ai_col3 = st.columns(3)
-            with ai_col1:
-                ai_api_key = st.text_input("AI API Key", value=AI_CONFIG.get('api_key', ''), placeholder="sk-xxx", type="password")
-            with ai_col2:
-                ai_api_url = st.text_input("API URL", value=AI_CONFIG.get('api_url', 'https://api.deepseek.com/v1/chat/completions'))
-            with ai_col3:
-                ai_model = st.text_input("模型名称", value=AI_CONFIG.get('model', 'deepseek-v4-flash'))
+        st.subheader("🤖 AI 答题")
+        # 直接用 Secrets 里的 AI 配置，隐藏所有前端配置
+        ai_enabled = bool(AI_CONFIG.get('api_key'))
+        if ai_enabled:
+            st.success("✅ AI 辅助答题已启用")
+        else:
+            st.info("ℹ️ AI 辅助答题未配置")
         
         if st.button("▶️ 开始自动答题", type="primary"):
             if not token_input or not member_id_input:
@@ -164,10 +158,7 @@ def main():
                 api_client.TOKEN = token_input
                 api_client.MEMBER_ID = member_id_input
                 
-                if ai_enabled:
-                    api_client.AI_CONFIG['api_key'] = ai_api_key
-                    api_client.AI_CONFIG['api_url'] = ai_api_url
-                    api_client.AI_CONFIG['model'] = ai_model
+                # AI 配置已经在 api_client.py 从 Secrets 读取，不需要再设置！
                 
                 def progress_callback(msg):
                     add_log(msg)
