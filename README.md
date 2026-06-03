@@ -1,4 +1,4 @@
-# 安全知识竞赛助手
+# 2026链工宝安全知识答题
 
 一个用于安全知识竞赛的 Streamlit 应用，支持自动答题、题库管理、错题收集等功能。
 DEMO：https://lgbaqydt.streamlit.app
