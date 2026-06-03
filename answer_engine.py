@@ -90,7 +90,9 @@ async def answer_one_question(qid, bank, wrong_list, stats, scene_name, level_no
             'updated': time.strftime('%Y-%m-%d', time.localtime())
         }
         
-        bank[key] = new_question_data
+        # 只有当来源是 AI 或 随机（题库没找到）时，才保存到题库
+        if source in ['AI', '随机', '手动']:
+            bank[key] = new_question_data
         
         if is_correct:
             stats['totalCorrect'] += 1
