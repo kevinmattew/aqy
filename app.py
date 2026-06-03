@@ -147,7 +147,7 @@ def main():
             with ai_col1:
                 ai_api_key = st.text_input("AI API Key", value=AI_CONFIG.get('api_key', ''), placeholder="sk-xxx", type="password")
             with ai_col2:
-                ai_api_url = st.text_input("API URL", value=AI_CONFIG.get('api_url', 'https://api.deepseek.com/v1/chat/completions')
+                ai_api_url = st.text_input("API URL", value=AI_CONFIG.get('api_url', 'https://api.deepseek.com/v1/chat/completions'))
             with ai_col3:
                 ai_model = st.text_input("模型名称", value=AI_CONFIG.get('model', 'deepseek-v4-flash'))
         
